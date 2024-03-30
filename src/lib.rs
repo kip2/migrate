@@ -1,6 +1,12 @@
 mod file;
 
-use chrono::Local;
+use chrono::{Local, Utc};
+
+fn current_unix_time_stamp() -> i64 {
+    let now = Utc::now();
+    let unix_time_stamp = now.timestamp();
+    unix_time_stamp
+}
 
 fn current_jp_date() -> String {
     let current_date = Local::now();
