@@ -20,12 +20,12 @@ pub fn read_file(filepath: &str) -> io::Result<String> {
     Ok(content)
 }
 
-fn clean_up_file(path: &str) -> Result<(), Box<dyn Error>> {
+pub fn clean_up_file(path: &str) -> Result<(), Box<dyn Error>> {
     fs::remove_file(path)?;
     Ok(())
 }
 
-fn create_migration_file() -> Result<(), Box<dyn Error>> {
+pub fn create_migration_file() -> Result<(), Box<dyn Error>> {
     // Create Migrations directory if it does not exist
     let dir_path = Path::new("./Migrations");
     if !dir_path.exists() {
