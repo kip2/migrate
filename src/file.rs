@@ -58,11 +58,37 @@ pub fn create_migration_file() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+pub fn get_all_migration_files(dir: String) -> io::Result<Vec<String>> {
+    let mut filenames = vec![];
+
+    let entries = fs::read_dir(dir)?;
+    for entry in entries {
+        let entry = entry?;
+        let path = entry.path();
+
+        if path.is_file() && path.extension().and_then(|e| e.to_str()) == Some("sql") {
+            if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                filenames.push(name.to_string());
+            }
+        }
+    }
+
+    filenames.sort();
+    Ok(filenames)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::fs;
     use std::path::Path;
+
+    #[test]
+    fn test_all_migration_files() {
+        let dir = "./test".to_string();
+        let filenames = get_all_migration_files(dir).unwrap();
+        assert_eq!(filenames, vec!["test1.sql", "test2.sql", "test3.sql"]);
+    }
 
     #[test]
     fn test_clean_up_file() {
