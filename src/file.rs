@@ -38,15 +38,18 @@ fn create_migration_file() -> Result<(), Box<dyn Error>> {
 
     // create empty sql up file
     let filepath_up = format!("./Migrations/{}_{}_up.sql", &jp_time, &unix_time);
-    if let Err(e) = create_file(&filepath_up, "") {
+    if Path::new(&filepath_up).exists() {
+        println!("File already exists: {}", filepath_up);
+    } else if let Err(e) = create_file(&filepath_up, "") {
         let _ = clean_up_file(&filepath_up);
         return Err(e.into());
     }
 
     // create empty sql down file
     let filepath_down = format!("./Migrations/{}_{}_down.sql", &jp_time, &unix_time);
-    create_file(&filepath_down, "")?;
-    if let Err(e) = create_file(&filepath_down, "") {
+    if Path::new(&filepath_down).exists() {
+        println!("File already exists: {}", filepath_down);
+    } else if let Err(e) = create_file(&filepath_down, "") {
         let _ = clean_up_file(&filepath_up);
         let _ = clean_up_file(&filepath_down);
         return Err(e.into());
