@@ -23,8 +23,15 @@ fn create_migration_file() -> bool {
     if !dir_path.exists() {
         fs::create_dir_all(dir_path).expect("test");
     }
-    // todo: if not exists migrations directory, create migrations directory.
-    // todo: create migration files;
+
+    // create empty sql up file
+    let filepath = "./Migrations/up.sql";
+    let _ = create_file(filepath, "");
+
+    // create empty sql down file
+    let filepath = "./Migrations/down.sql";
+    let _ = create_file(filepath, "");
+
     true
 }
 
