@@ -1,6 +1,8 @@
+use std::fs;
 use std::fs::File;
 use std::io::Read;
 use std::io::{self, Write};
+use std::path::Path;
 
 pub fn create_file(filepath: &str, contents: &str) -> io::Result<()> {
     let mut file = File::create(filepath)?;
@@ -15,11 +17,27 @@ pub fn read_file(filepath: &str) -> io::Result<String> {
     Ok(content)
 }
 
+fn create_migration_file() -> bool {
+    // Create Migrations directory if it does not exist
+    let dir_path = Path::new("./Migrations");
+    if !dir_path.exists() {
+        fs::create_dir_all(dir_path).expect("test");
+    }
+    // todo: if not exists migrations directory, create migrations directory.
+    // todo: create migration files;
+    true
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::fs;
     use std::path::Path;
+
+    #[test]
+    fn test_create_migration_file() {
+        assert_eq!(create_migration_file(), true);
+    }
 
     #[test]
     fn test_read_file() {
