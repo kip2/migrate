@@ -1,3 +1,5 @@
+use migrate::console::run;
+
 fn main() {
-    println!("Hello, world!");
+    let args = run();
 }
