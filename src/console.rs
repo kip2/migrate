@@ -5,10 +5,10 @@ use crate::file::create_migration_file;
 
 #[derive(Debug, Parser)]
 pub struct Args {
-    #[arg(long = "create")]
+    #[arg(long = "create", help = "Create migrate files")]
     create: bool,
 
-    #[arg(long = "init")]
+    #[arg(long = "init", help = "Create migrate table")]
     init: bool,
 
     #[arg(
