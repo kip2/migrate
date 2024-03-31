@@ -8,7 +8,7 @@ pub struct Args {
     #[arg(long = "create", help = "Create migrate files")]
     create: bool,
 
-    #[arg(long = "init", help = "Create migrate table")]
+    #[arg(long = "init", help = "Create migrate table if it doesn't exist.")]
     init: bool,
 
     #[arg(
@@ -22,7 +22,6 @@ pub struct Args {
 
 pub async fn run() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
-    println!("args: {:?}", args);
 
     if args.create {
         create_migration_file().expect("Failed migration files");

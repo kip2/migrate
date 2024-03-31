@@ -12,6 +12,30 @@ pub async fn create_migration_table() {
     run(query).await.expect("Failed migration table");
 }
 
+pub async fn insert_migration(db: &Pool<MySql>, filename: String) -> Result<(), Box<dyn Error>> {
+    let query = vec![format!(
+        "INSERT INTO migrations (filename) VALUES ('{}')",
+        filename
+    )];
+
+    execute_query(db, query).await;
+
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tokio;
+
+    #[tokio::test]
+    async fn test_insert_migration() {
+        let pool = db_pool().await;
+        let filename = "2024-03-31_1711885797_up.sql".to_string();
+        insert_migration(&pool, filename).await;
+    }
+}
+
 pub async fn run(query: &str) -> Result<(), Box<dyn Error>> {
     let pool = db_pool().await;
     let queries = vec![query.to_string()];
