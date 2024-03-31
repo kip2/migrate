@@ -1,5 +1,5 @@
 use sqlx::mysql::MySqlPoolOptions;
-use sqlx::{MySql, Pool};
+use sqlx::{MySql, Pool, Row};
 use std::{env, error::Error, fs};
 
 pub async fn create_migration_table() {
@@ -13,24 +13,65 @@ pub async fn create_migration_table() {
     run(query).await.expect("Failed migration table");
 }
 
+async fn get_last_migration(db: &Pool<MySql>) -> Option<String> {
+    let query = format!("SELECT filename FROM migrations ORDER BY id DESC LIMIT 1");
+    let result = select_query(db, query).await;
+
+    match result {
+        Ok(rows) => {
+            if let Some(row) = rows.first() {
+                let filename: String = row.get("filename");
+                Some(filename)
+            } else {
+                None
+            }
+        }
+        Err(e) => {
+            println!("Query failed: {}", e);
+            None
+        }
+    }
+}
+
 pub async fn insert_migration(db: &Pool<MySql>, filename: String) -> Result<(), Box<dyn Error>> {
     let query = format!("INSERT INTO migrations (filename) VALUES ('{}')", filename);
-
     execute_query(db, query).await;
-
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
+    use std::result;
+
     use super::*;
     use tokio;
+
+    #[tokio::test]
+    async fn test_get_last_migration() {
+        let pool = db_pool().await;
+        let result = get_last_migration(&pool).await;
+        match result {
+            Some(value) => println!("Got a value: {}", value),
+            None => println!("Got nothing"),
+        }
+    }
 
     #[tokio::test]
     async fn test_insert_migration() {
         let pool = db_pool().await;
         let filename = "2024-03-31_1711885797_up.sql".to_string();
         let _ = insert_migration(&pool, filename).await;
+    }
+
+    #[tokio::test]
+    async fn test_select_query() {
+        let pool = db_pool().await;
+        let query = "SELECT filename FROM migrations ORDER BY id DESC LIMIT 1".to_string();
+        let result = select_query(&pool, query).await;
+        for row in result.unwrap() {
+            let filename: String = row.get("filename");
+            println!("{:?}", filename);
+        }
     }
 }
 
@@ -71,6 +112,21 @@ fn read_sql_file(path: &str) -> Result<Vec<String>, Box<dyn Error>> {
         .map(|s| s.trim().to_string())
         .collect();
     Ok(queries)
+}
+
+async fn select_query(
+    db: &Pool<MySql>,
+    query: String,
+) -> Result<Vec<sqlx::mysql::MySqlRow>, Box<dyn Error>> {
+    let result = sqlx::query(&query).fetch_all(db).await;
+
+    match result {
+        Ok(rows) => Ok(rows),
+        Err(e) => {
+            println!("Database query failed: {}", e);
+            Err(e.into())
+        }
+    }
 }
 
 async fn execute_query(db: &Pool<MySql>, query: String) {
