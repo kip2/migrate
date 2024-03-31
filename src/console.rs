@@ -20,12 +20,8 @@ pub struct Args {
     rollback: u32,
 }
 
-fn get_args() -> Args {
-    Args::parse()
-}
-
 pub fn run() -> Result<(), Box<dyn Error>> {
-    let args = get_args();
+    let args = Args::parse();
     println!("args: {:?}", args);
 
     if args.create {
