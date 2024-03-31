@@ -3,6 +3,7 @@ use sqlx::{MySql, Pool};
 use std::{env, error::Error, fs};
 
 pub async fn create_migration_table() {
+    // Table definitions for managing migrations
     let query = "CREATE TABLE migrations (
         id INT AUTO_INCREMENT PRIMARY KEY,
         filename VARCHAR(400)
