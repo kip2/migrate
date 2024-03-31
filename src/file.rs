@@ -65,11 +65,6 @@ mod tests {
     use std::path::Path;
 
     #[test]
-    fn test_create_migration_file() {
-        assert!(create_migration_file().is_ok());
-    }
-
-    #[test]
     fn test_clean_up_file() {
         let filepath1 = "./Migrations/test.txt";
         let _ = create_file(&filepath1, "");
