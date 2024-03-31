@@ -20,6 +20,11 @@ pub fn read_file(filepath: &str) -> io::Result<String> {
     Ok(content)
 }
 
+fn clean_up_file(path: &str) -> Result<(), Box<dyn Error>> {
+    fs::remove_file(path)?;
+    Ok(())
+}
+
 fn create_migration_file() -> Result<(), Box<dyn Error>> {
     // Create Migrations directory if it does not exist
     let dir_path = Path::new("./Migrations");
@@ -33,11 +38,19 @@ fn create_migration_file() -> Result<(), Box<dyn Error>> {
 
     // create empty sql up file
     let filepath_up = format!("./Migrations/{}_{}_up.sql", &jp_time, &unix_time);
-    create_file(&filepath_up, "")?;
+    if let Err(e) = create_file(&filepath_up, "") {
+        let _ = clean_up_file(&filepath_up);
+        return Err(e.into());
+    }
 
     // create empty sql down file
     let filepath_down = format!("./Migrations/{}_{}_down.sql", &jp_time, &unix_time);
     create_file(&filepath_down, "")?;
+    if let Err(e) = create_file(&filepath_down, "") {
+        let _ = clean_up_file(&filepath_up);
+        let _ = clean_up_file(&filepath_down);
+        return Err(e.into());
+    }
 
     Ok(())
 }
@@ -51,6 +64,18 @@ mod tests {
     #[test]
     fn test_create_migration_file() {
         assert!(create_migration_file().is_ok());
+    }
+
+    #[test]
+    fn test_clean_up_file() {
+        let filepath1 = "./Migrations/test.txt";
+        let _ = create_file(&filepath1, "");
+        assert!(clean_up_file(&filepath1).is_ok());
+
+        let filepath2 = "./Migrations/test1.txt";
+        let _ = create_file(&filepath2, "");
+        assert!(clean_up_file(&filepath1).is_err());
+        let _ = clean_up_file(&filepath2);
     }
 
     #[test]
