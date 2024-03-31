@@ -1,8 +1,11 @@
+use std::error::Error;
 use std::fs;
 use std::fs::File;
 use std::io::Read;
 use std::io::{self, Write};
 use std::path::Path;
+
+use crate::time_util::{jp_date, unix_time_stamp};
 
 pub fn create_file(filepath: &str, contents: &str) -> io::Result<()> {
     let mut file = File::create(filepath)?;
@@ -17,22 +20,26 @@ pub fn read_file(filepath: &str) -> io::Result<String> {
     Ok(content)
 }
 
-fn create_migration_file() -> bool {
+fn create_migration_file() -> Result<(), Box<dyn Error>> {
     // Create Migrations directory if it does not exist
     let dir_path = Path::new("./Migrations");
     if !dir_path.exists() {
         fs::create_dir_all(dir_path).expect("test");
     }
 
+    // Retrieve common timestamp
+    let jp_time = jp_date();
+    let unix_time = unix_time_stamp();
+
     // create empty sql up file
-    let filepath = "./Migrations/up.sql";
-    let _ = create_file(filepath, "");
+    let filepath_up = format!("./Migrations/{}_{}_up.sql", &jp_time, &unix_time);
+    create_file(&filepath_up, "")?;
 
     // create empty sql down file
-    let filepath = "./Migrations/down.sql";
-    let _ = create_file(filepath, "");
+    let filepath_down = format!("./Migrations/{}_{}_down.sql", &jp_time, &unix_time);
+    create_file(&filepath_down, "")?;
 
-    true
+    Ok(())
 }
 
 #[cfg(test)]
@@ -43,7 +50,7 @@ mod tests {
 
     #[test]
     fn test_create_migration_file() {
-        assert_eq!(create_migration_file(), true);
+        assert!(create_migration_file().is_ok());
     }
 
     #[test]
