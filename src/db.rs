@@ -2,20 +2,36 @@ use sqlx::mysql::MySqlPoolOptions;
 use sqlx::{MySql, Pool};
 use std::{env, error::Error, fs};
 
-pub async fn run(filepath: String) -> Result<(), Box<dyn Error>> {
-    // Read environment variables and generate URL
+pub async fn create_migration_table() {
+    let query = "CREATE TABLE migrations (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        filename VARCHAR(400)
+    );";
+
+    run(query).await.expect("Failed migration table");
+}
+
+pub async fn run(query: &str) -> Result<(), Box<dyn Error>> {
+    let pool = db_pool().await;
+    let queries = vec![query.to_string()];
+    execute_query(&pool, queries).await;
+    Ok(())
+}
+
+async fn db_pool() -> Pool<MySql> {
     dotenv::dotenv().expect("Fialed to read .env file");
     let database_url = env::var("DATABASE_URL").expect("DABASE_URL must be set");
 
-    // Generate DB connection
     let pool = MySqlPoolOptions::new()
         .max_connections(10)
         .connect(&database_url)
         .await
         .unwrap_or_else(|_| panic!("Cannot connect to the database"));
+    pool
+}
 
-    // SQL query file path
-    let path = filepath;
+pub async fn read_and_run(path: String) -> Result<(), Box<dyn Error>> {
+    let pool = db_pool().await;
 
     // Read SQL queries
     let queries = read_sql_file(&path).unwrap();
@@ -47,7 +63,6 @@ async fn execute_query(db: &Pool<MySql>, queries: Vec<String>) {
             Ok(_) => {}
             Err(e) => {
                 println!("Database query failed: {}", e);
-                println!("Failed query: {:?}", &query);
                 // rollback
                 tx.rollback().await.expect("Transaction rollback error.");
                 return;
