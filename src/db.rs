@@ -41,8 +41,6 @@ pub async fn insert_migration(db: &Pool<MySql>, filename: String) -> Result<(), 
 
 #[cfg(test)]
 mod tests {
-    use std::result;
-
     use super::*;
     use tokio;
 
