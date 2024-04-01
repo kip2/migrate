@@ -15,7 +15,7 @@ pub async fn create_migration_table() {
 
 async fn get_last_migration(db: &Pool<MySql>) -> Option<String> {
     let query = format!("SELECT filename FROM migrations ORDER BY id DESC LIMIT 1");
-    let result = select_query(db, query).await;
+    let result = execute_select_query(db, query).await;
 
     match result {
         Ok(rows) => {
@@ -65,7 +65,7 @@ mod tests {
     async fn test_select_query() {
         let pool = db_pool().await;
         let query = "SELECT filename FROM migrations ORDER BY id DESC LIMIT 1".to_string();
-        let result = select_query(&pool, query).await;
+        let result = execute_select_query(&pool, query).await;
         for row in result.unwrap() {
             let filename: String = row.get("filename");
             println!("{:?}", filename);
@@ -112,7 +112,7 @@ fn read_sql_file(path: &str) -> Result<Vec<String>, Box<dyn Error>> {
     Ok(queries)
 }
 
-async fn select_query(
+async fn execute_select_query(
     db: &Pool<MySql>,
     query: String,
 ) -> Result<Vec<sqlx::mysql::MySqlRow>, Box<dyn Error>> {
