@@ -1,7 +1,36 @@
+use crate::file::get_all_migration_files;
 use crate::Migrations;
 use sqlx::mysql::{MySqlPoolOptions, MySqlQueryResult};
 use sqlx::{MySql, Pool, Row};
 use std::{env, error::Error, fs};
+
+pub async fn migrate() -> Result<(), Box<dyn Error>> {
+    let pool = db_pool().await;
+    let last_migration = get_last_migration(&pool, Migrations::UP).await;
+    let dir = "./Migrations";
+    let all_migrations =
+        get_all_migration_files(dir, Migrations::UP).expect("Failed get all migration files");
+
+    let start_index = match last_migration {
+        Some(filename) => {
+            all_migrations
+                .iter()
+                .position(|m| m == &filename)
+                .unwrap_or(0)
+                + 1
+        }
+        None => 0,
+    };
+
+    for filename in all_migrations.iter().skip(start_index) {
+        println!("Processing up migration for {}", filename);
+        let path = format!("./Migrations/{}", &filename);
+        let queries = read_sql_file(&path).expect(&format!("Failed to read {} file", &filename));
+        execute_queries(&pool, queries).await;
+    }
+    println!("Migration ended...");
+    Ok(())
+}
 
 pub async fn create_migration_table() {
     // Table definitions for managing migrations
