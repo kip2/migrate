@@ -2,6 +2,11 @@ use sqlx::mysql::MySqlPoolOptions;
 use sqlx::{MySql, Pool, Row};
 use std::{env, error::Error, fs};
 
+enum Migrations {
+    UP,
+    DOWN,
+}
+
 pub async fn create_migration_table() {
     // Table definitions for managing migrations
     let query = "CREATE TABLE migrations (
@@ -14,15 +19,23 @@ pub async fn create_migration_table() {
     run(query).await.expect("Failed migration table");
 }
 
-async fn get_last_migration(db: &Pool<MySql>) -> Option<String> {
-    let query = format!("SELECT filename FROM migrations ORDER BY id DESC LIMIT 1");
+async fn get_last_migration(db: &Pool<MySql>, column_type: Migrations) -> Option<String> {
+    let query = format!("SELECT up_file, down_file FROM migrations ORDER BY id DESC LIMIT 1");
     let result = execute_select_query(db, query).await;
 
     match result {
         Ok(rows) => {
             if let Some(row) = rows.first() {
-                let filename: String = row.get("filename");
-                Some(filename)
+                match column_type {
+                    Migrations::UP => {
+                        let filename: String = row.get("up_file");
+                        Some(filename)
+                    }
+                    Migrations::DOWN => {
+                        let filename: String = row.get("down_file");
+                        Some(filename)
+                    }
+                }
             } else {
                 None
             }
@@ -48,7 +61,13 @@ mod tests {
     #[tokio::test]
     async fn test_get_last_migration() {
         let pool = db_pool().await;
-        let result = get_last_migration(&pool).await;
+        let result = get_last_migration(&pool, Migrations::UP).await;
+        match result {
+            Some(value) => println!("Got a value: {}", value),
+            None => println!("Got nothing"),
+        }
+
+        let result = get_last_migration(&pool, Migrations::DOWN).await;
         match result {
             Some(value) => println!("Got a value: {}", value),
             None => println!("Got nothing"),
