@@ -6,7 +6,8 @@ pub async fn create_migration_table() {
     // Table definitions for managing migrations
     let query = "CREATE TABLE migrations (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        filename VARCHAR(400)
+        up_file VARCHAR(400) NOT NULL,
+        down_file VARCHAR(400) NOT NULL
     );"
     .to_string();
 
