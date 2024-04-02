@@ -1,11 +1,7 @@
+use crate::Migrations;
 use sqlx::mysql::{MySqlPoolOptions, MySqlQueryResult};
 use sqlx::{MySql, Pool, Row};
 use std::{env, error::Error, fs};
-
-pub enum Migrations {
-    UP,
-    DOWN,
-}
 
 pub async fn create_migration_table() {
     // Table definitions for managing migrations

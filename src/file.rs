@@ -6,6 +6,7 @@ use std::io::{self, Write};
 use std::path::Path;
 
 use crate::time_util::{jp_date, unix_time_stamp};
+use crate::Migrations;
 
 pub fn create_file(filepath: &str, contents: &str) -> io::Result<()> {
     let mut file = File::create(filepath)?;
@@ -58,7 +59,7 @@ pub fn create_migration_file() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn get_all_migration_files(dir: String) -> io::Result<Vec<String>> {
+pub fn get_all_migration_files(dir: &str, migration_type: Migrations) -> io::Result<Vec<String>> {
     let mut filenames = vec![];
 
     let entries = fs::read_dir(dir)?;
@@ -66,9 +67,20 @@ pub fn get_all_migration_files(dir: String) -> io::Result<Vec<String>> {
         let entry = entry?;
         let path = entry.path();
 
-        if path.is_file() && path.extension().and_then(|e| e.to_str()) == Some("sql") {
+        if path.is_file() {
             if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                filenames.push(name.to_string());
+                match migration_type {
+                    Migrations::UP => {
+                        if name.ends_with("_up.sql") {
+                            filenames.push(name.to_string());
+                        }
+                    }
+                    Migrations::DOWN => {
+                        if name.ends_with("_down.sql") {
+                            filenames.push(name.to_string());
+                        }
+                    }
+                }
             }
         }
     }
@@ -86,8 +98,16 @@ mod tests {
     #[test]
     fn test_all_migration_files() {
         let dir = "./test".to_string();
-        let filenames = get_all_migration_files(dir).unwrap();
-        assert_eq!(filenames, vec!["test1.sql", "test2.sql", "test3.sql"]);
+        let filenames = get_all_migration_files(&dir, Migrations::UP).unwrap();
+        assert_eq!(
+            filenames,
+            vec!["test1_up.sql", "test2_up.sql", "test3_up.sql"]
+        );
+        let filenames = get_all_migration_files(&dir, Migrations::DOWN).unwrap();
+        assert_eq!(
+            filenames,
+            vec!["test1_down.sql", "test2_down.sql", "test3_down.sql"]
+        );
     }
 
     #[test]
