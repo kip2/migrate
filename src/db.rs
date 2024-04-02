@@ -1,8 +1,8 @@
-use sqlx::mysql::MySqlPoolOptions;
+use sqlx::mysql::{MySqlPoolOptions, MySqlQueryResult};
 use sqlx::{MySql, Pool, Row};
 use std::{env, error::Error, fs};
 
-enum Migrations {
+pub enum Migrations {
     UP,
     DOWN,
 }
@@ -47,10 +47,20 @@ async fn get_last_migration(db: &Pool<MySql>, column_type: Migrations) -> Option
     }
 }
 
-pub async fn insert_migration(db: &Pool<MySql>, filename: String) -> Result<(), Box<dyn Error>> {
-    let query = format!("INSERT INTO migrations (filename) VALUES ('{}')", filename);
-    execute_query(db, query).await;
-    Ok(())
+pub async fn insert_migration(
+    db: &Pool<MySql>,
+    up_file_name: String,
+    down_file_name: String,
+) -> Result<MySqlQueryResult, Box<dyn Error>> {
+    let query = "INSERT INTO migrations (up_file, down_file) VALUES (?, ?)";
+
+    let result = sqlx::query(query)
+        .bind(up_file_name)
+        .bind(down_file_name)
+        .execute(db)
+        .await;
+
+    result.map_err(|e| e.into())
 }
 
 #[cfg(test)]
@@ -77,8 +87,9 @@ mod tests {
     #[tokio::test]
     async fn test_insert_migration() {
         let pool = db_pool().await;
-        let filename = "2024-03-31_1711885797_up.sql".to_string();
-        let _ = insert_migration(&pool, filename).await;
+        let up_file = "2024-03-31_1711885799_up.sql".to_string();
+        let down_file = "2024-03-31_1711885799_down.sql".to_string();
+        let _ = insert_migration(&pool, up_file, down_file).await;
     }
 
     #[tokio::test]
