@@ -25,16 +25,15 @@ pub async fn migrate() -> Result<(), Box<dyn Error>> {
     };
 
     for (index, up_filename) in all_up_migrations.iter().enumerate().skip(start_index) {
-        println!("Processing up migration for {}", up_filename);
+        println!("Processing up migration for {}", &up_filename);
         let up_path = format!("{}/{}", &dir, &up_filename);
         let down_filename = all_down_migrations
             .get(index)
             .expect("Mathing down migrasion not found");
-        let down_path = format!("{}/{}", &dir, &down_filename);
         let queries =
             read_sql_file(&up_path).expect(&format!("Failed to read {} file", &up_filename));
         execute_queries(&pool, queries).await;
-        insert_migration(&pool, up_path, down_path)
+        insert_migration(&pool, up_filename.clone(), down_filename.clone())
             .await
             .expect("Failed to register file in the migration table");
     }
@@ -102,6 +101,11 @@ pub async fn insert_migration(
 mod tests {
     use super::*;
     use tokio;
+
+    #[tokio::test]
+    async fn test_migrate() {
+        let _ = migrate().await;
+    }
 
     #[tokio::test]
     async fn test_get_last_migration() {
