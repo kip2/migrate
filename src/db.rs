@@ -5,6 +5,7 @@ use sqlx::{MySql, Pool, Row};
 use std::{env, error::Error, fs};
 
 pub async fn migrate() -> Result<(), Box<dyn Error>> {
+    println!("Start migration");
     let pool = db_pool().await;
     let last_migration = get_last_migration(&pool, Migrations::UP).await;
     let dir = "./Migrations";
