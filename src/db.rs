@@ -8,12 +8,14 @@ pub async fn migrate() -> Result<(), Box<dyn Error>> {
     let pool = db_pool().await;
     let last_migration = get_last_migration(&pool, Migrations::UP).await;
     let dir = "./Migrations";
-    let all_migrations =
+    let all_up_migrations =
         get_all_migration_files(dir, Migrations::UP).expect("Failed get all migration files");
+    let all_down_migrations =
+        get_all_migration_files(dir, Migrations::DOWN).expect("Failed get all migration files");
 
     let start_index = match last_migration {
         Some(filename) => {
-            all_migrations
+            all_up_migrations
                 .iter()
                 .position(|m| m == &filename)
                 .unwrap_or(0)
@@ -22,11 +24,19 @@ pub async fn migrate() -> Result<(), Box<dyn Error>> {
         None => 0,
     };
 
-    for filename in all_migrations.iter().skip(start_index) {
-        println!("Processing up migration for {}", filename);
-        let path = format!("./Migrations/{}", &filename);
-        let queries = read_sql_file(&path).expect(&format!("Failed to read {} file", &filename));
+    for (index, up_filename) in all_up_migrations.iter().enumerate().skip(start_index) {
+        println!("Processing up migration for {}", up_filename);
+        let up_path = format!("{}/{}", &dir, &up_filename);
+        let down_filename = all_down_migrations
+            .get(index)
+            .expect("Mathing down migrasion not found");
+        let down_path = format!("{}/{}", &dir, &down_filename);
+        let queries =
+            read_sql_file(&up_path).expect(&format!("Failed to read {} file", &up_filename));
         execute_queries(&pool, queries).await;
+        insert_migration(&pool, up_path, down_path)
+            .await
+            .expect("Failed to register file in the migration table");
     }
     println!("Migration ended...");
     Ok(())
