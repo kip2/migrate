@@ -98,10 +98,28 @@ pub async fn insert_migration(
     result.map_err(|e| e.into())
 }
 
+pub async fn remove_migration(
+    db: &Pool<MySql>,
+    down_filename: String,
+) -> Result<MySqlQueryResult, Box<dyn Error>> {
+    let query = "DELETE FROM migrations WHERE down_file = ?";
+
+    let result = sqlx::query(query).bind(down_filename).execute(db).await;
+
+    result.map_err(|e| e.into())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use tokio;
+
+    #[tokio::test]
+    async fn test_remove_migration() {
+        let pool = db_pool().await;
+        let down_file = "2024-04-03_1712147726_down.sql".to_string();
+        let _ = remove_migration(&pool, down_file).await;
+    }
 
     #[tokio::test]
     async fn test_migrate() {
