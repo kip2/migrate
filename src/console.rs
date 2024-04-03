@@ -1,7 +1,11 @@
 use clap::Parser;
+use sqlx::migrate;
 use std::error::Error;
 
-use crate::{db::create_migration_table, file::create_migration_file};
+use crate::{
+    db::{create_migration_table, migrate},
+    file::create_migration_file,
+};
 
 #[derive(Debug, Parser)]
 pub struct Args {
@@ -30,7 +34,7 @@ pub async fn run() -> Result<(), Box<dyn Error>> {
     } else if args.rollback > 0 {
         println!("rollback!");
     } else {
-        println!("other!");
+        migrate().await.expect("Failed migration");
     }
 
     Ok(())
