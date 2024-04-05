@@ -85,11 +85,6 @@ pub fn get_all_migration_files(dir: &str, migration_type: Migrations) -> io::Res
         }
     }
 
-    // match migration_type {
-    //     Migrations::UP => filenames.sort(),
-    //     Migrations::DOWN => filenames.sort_by(|a, b| b.cmp(a)),
-    // }
-
     filenames.sort();
     Ok(filenames)
 }

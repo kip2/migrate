@@ -161,64 +161,6 @@ pub async fn remove_migration(
     result.map_err(|e| e.into())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use tokio;
-
-    #[tokio::test]
-    async fn test_rollback() {
-        roolback(1);
-    }
-
-    #[tokio::test]
-    async fn test_remove_migration() {
-        let pool = db_pool().await;
-        let down_file = "2024-04-03_1712147726_down.sql".to_string();
-        let _ = remove_migration(&pool, down_file).await;
-    }
-
-    #[tokio::test]
-    async fn test_migrate() {
-        let _ = migrate().await;
-    }
-
-    #[tokio::test]
-    async fn test_get_last_migration() {
-        let pool = db_pool().await;
-        let result = get_last_migration(&pool, Migrations::UP).await;
-        match result {
-            Some(value) => println!("Got a value: {}", value),
-            None => println!("Got nothing"),
-        }
-
-        let result = get_last_migration(&pool, Migrations::DOWN).await;
-        match result {
-            Some(value) => println!("Got a value: {}", value),
-            None => println!("Got nothing"),
-        }
-    }
-
-    #[tokio::test]
-    async fn test_insert_migration() {
-        let pool = db_pool().await;
-        let up_file = "2024-03-31_1711885799_up.sql".to_string();
-        let down_file = "2024-03-31_1711885799_down.sql".to_string();
-        let _ = insert_migration(&pool, up_file, down_file).await;
-    }
-
-    #[tokio::test]
-    async fn test_select_query() {
-        let pool = db_pool().await;
-        let query = "SELECT filename FROM migrations ORDER BY id DESC LIMIT 1".to_string();
-        let result = execute_select_query(&pool, query).await;
-        for row in result.unwrap() {
-            let filename: String = row.get("filename");
-            println!("{:?}", filename);
-        }
-    }
-}
-
 pub async fn run(query: String) -> Result<(), Box<dyn Error>> {
     let pool = db_pool().await;
     execute_query(&pool, query).await;
@@ -318,4 +260,57 @@ async fn execute_queries(db: &Pool<MySql>, queries: Vec<String>) {
     let _ = tx.commit().await.unwrap_or_else(|e| {
         println!("{:?}", e);
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tokio;
+
+    #[tokio::test]
+    async fn test_remove_migration() {
+        let pool = db_pool().await;
+        let down_file = "2024-04-03_1712147726_down.sql".to_string();
+        let _ = remove_migration(&pool, down_file).await;
+    }
+
+    #[tokio::test]
+    async fn test_migrate() {
+        let _ = migrate().await;
+    }
+
+    #[tokio::test]
+    async fn test_get_last_migration() {
+        let pool = db_pool().await;
+        let result = get_last_migration(&pool, Migrations::UP).await;
+        match result {
+            Some(value) => println!("Got a value: {}", value),
+            None => println!("Got nothing"),
+        }
+
+        let result = get_last_migration(&pool, Migrations::DOWN).await;
+        match result {
+            Some(value) => println!("Got a value: {}", value),
+            None => println!("Got nothing"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_insert_migration() {
+        let pool = db_pool().await;
+        let up_file = "2024-03-31_1711885799_up.sql".to_string();
+        let down_file = "2024-03-31_1711885799_down.sql".to_string();
+        let _ = insert_migration(&pool, up_file, down_file).await;
+    }
+
+    #[tokio::test]
+    async fn test_select_query() {
+        let pool = db_pool().await;
+        let query = "SELECT filename FROM migrations ORDER BY id DESC LIMIT 1".to_string();
+        let result = execute_select_query(&pool, query).await;
+        for row in result.unwrap() {
+            let filename: String = row.get("filename");
+            println!("{:?}", filename);
+        }
+    }
 }

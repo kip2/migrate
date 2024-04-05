@@ -1,5 +1,4 @@
 use clap::Parser;
-use sqlx::migrate;
 use std::error::Error;
 
 use crate::{
@@ -32,7 +31,9 @@ pub async fn run() -> Result<(), Box<dyn Error>> {
     } else if args.init {
         create_migration_table().await;
     } else if args.rollback > 0 {
-        roolback(args.rollback).await;
+        roolback(args.rollback)
+            .await
+            .expect("Failed rollback migrations");
     } else {
         migrate().await.expect("Failed migration");
     }
