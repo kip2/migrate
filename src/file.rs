@@ -85,7 +85,11 @@ pub fn get_all_migration_files(dir: &str, migration_type: Migrations) -> io::Res
         }
     }
 
-    filenames.sort();
+    match migration_type {
+        Migrations::UP => filenames.sort(),
+        Migrations::DOWN => filenames.sort_by(|a, b| b.cmp(a)),
+    }
+
     Ok(filenames)
 }
 
@@ -106,7 +110,7 @@ mod tests {
         let filenames = get_all_migration_files(&dir, Migrations::DOWN).unwrap();
         assert_eq!(
             filenames,
-            vec!["test1_down.sql", "test2_down.sql", "test3_down.sql"]
+            vec!["test3_down.sql", "test2_down.sql", "test1_down.sql"]
         );
     }
 
