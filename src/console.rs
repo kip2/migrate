@@ -3,7 +3,7 @@ use sqlx::migrate;
 use std::error::Error;
 
 use crate::{
-    db::{create_migration_table, migrate},
+    db::{create_migration_table, migrate, roolback},
     file::create_migration_file,
 };
 
@@ -21,7 +21,7 @@ pub struct Args {
         help = "Rollback database",
         default_value = "0"
     )]
-    rollback: u32,
+    rollback: usize,
 }
 
 pub async fn run() -> Result<(), Box<dyn Error>> {
@@ -32,7 +32,7 @@ pub async fn run() -> Result<(), Box<dyn Error>> {
     } else if args.init {
         create_migration_table().await;
     } else if args.rollback > 0 {
-        println!("rollback!");
+        roolback(args.rollback).await;
     } else {
         migrate().await.expect("Failed migration");
     }

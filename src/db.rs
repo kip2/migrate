@@ -2,6 +2,7 @@ use crate::file::get_all_migration_files;
 use crate::Migrations;
 use sqlx::mysql::{MySqlPoolOptions, MySqlQueryResult};
 use sqlx::{MySql, Pool, Row};
+use std::io;
 use std::{env, error::Error, fs};
 
 pub async fn migrate() -> Result<(), Box<dyn Error>> {
@@ -12,8 +13,7 @@ pub async fn migrate() -> Result<(), Box<dyn Error>> {
     let all_up_migrations =
         get_all_migration_files(dir, Migrations::UP).expect("Failed get all migration files");
     let all_down_migrations =
-        get_all_migration_files(dir, Migrations::DOWN).expect("Failed get all migration files");
-
+        get_all_migration_files(dir, Migrations::DOWN).expect("Failed get all migration file");
     let start_index = match last_migration {
         Some(filename) => {
             all_up_migrations
@@ -30,7 +30,7 @@ pub async fn migrate() -> Result<(), Box<dyn Error>> {
         let up_path = format!("{}/{}", &dir, &up_filename);
         let down_filename = all_down_migrations
             .get(index)
-            .expect("Mathing down migrasion not found");
+            .expect("Matching down migration not found");
         let queries =
             read_sql_file(&up_path).expect(&format!("Failed to read {} file", &up_filename));
         execute_queries(&pool, queries).await;
@@ -98,6 +98,58 @@ pub async fn insert_migration(
     result.map_err(|e| e.into())
 }
 
+pub async fn roolback(n: usize) -> Result<(), Box<dyn Error>> {
+    println!("Rolling back {} migration(s)...", n);
+    let pool = db_pool().await;
+    let last_migration = get_last_migration(&pool, Migrations::DOWN).await;
+    let dir = "./Migrations";
+    let mut all_down_migrations =
+        get_all_migration_files(dir, Migrations::DOWN).expect("Failed get all migration files");
+
+    all_down_migrations.sort_by(|a, b| b.cmp(a));
+
+    let start_index = match last_migration.clone() {
+        Some(filename) => all_down_migrations
+            .iter()
+            .position(|m| m == &filename)
+            .unwrap_or(0),
+        None => all_down_migrations.len(),
+    };
+
+    if start_index == all_down_migrations.len() {
+        return Err(Box::new(io::Error::new(
+            io::ErrorKind::NotFound,
+            format!(
+                "Could not find the last migration ran: {}",
+                last_migration.unwrap()
+            ),
+        )));
+    }
+
+    for (index, down_filename) in all_down_migrations
+        .iter()
+        .enumerate()
+        .skip(start_index)
+        .take(n)
+    {
+        println!("Processing down migration for {}", &down_filename);
+        let down_path = format!("{}/{}", &dir, &down_filename);
+        let down_filename = all_down_migrations
+            .get(index)
+            .expect("Matching down migration not found");
+        let queries =
+            read_sql_file(&down_path).expect(&format!("Failed to read {} file", &down_filename));
+        execute_queries(&pool, queries).await;
+        remove_migration(&pool, down_filename.clone())
+            .await
+            .expect("Delete execute failed");
+    }
+
+    println!("Rollback completed.");
+
+    Ok(())
+}
+
 pub async fn remove_migration(
     db: &Pool<MySql>,
     down_filename: String,
@@ -113,6 +165,11 @@ pub async fn remove_migration(
 mod tests {
     use super::*;
     use tokio;
+
+    #[tokio::test]
+    async fn test_rollback() {
+        roolback(1);
+    }
 
     #[tokio::test]
     async fn test_remove_migration() {
