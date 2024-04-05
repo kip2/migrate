@@ -204,6 +204,11 @@ async fn execute_select_query(
     db: &Pool<MySql>,
     query: String,
 ) -> Result<Vec<sqlx::mysql::MySqlRow>, Box<dyn Error>> {
+    // Check if the query string starts with SELECT
+    if !query.trim_start().to_uppercase().starts_with("SELECT") {
+        return Err("Query must start with SELECT".into());
+    }
+
     let result = sqlx::query(&query).fetch_all(db).await;
 
     match result {
@@ -306,11 +311,14 @@ mod tests {
     #[tokio::test]
     async fn test_select_query() {
         let pool = db_pool().await;
-        let query = "SELECT filename FROM migrations ORDER BY id DESC LIMIT 1".to_string();
+        let query = "SELECT up_file FROM migrations ORDER BY id DESC LIMIT 1".to_string();
         let result = execute_select_query(&pool, query).await;
         for row in result.unwrap() {
-            let filename: String = row.get("filename");
+            let filename: String = row.get("up_file");
             println!("{:?}", filename);
         }
+        let query = "DELETE FROM test1".to_string();
+        let result = execute_select_query(&pool, query).await;
+        assert!(result.is_err(), "Expected an error for non-SELECT query");
     }
 }
