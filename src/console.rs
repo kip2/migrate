@@ -8,10 +8,14 @@ use crate::{
 
 #[derive(Debug, Parser)]
 pub struct Args {
-    #[arg(long = "create", help = "Create migrate files")]
+    #[arg(short = 'c', long = "create", help = "Create migrate files")]
     create: bool,
 
-    #[arg(long = "init", help = "Create migrate table if it doesn't exist.")]
+    #[arg(
+        short = 'i',
+        long = "init",
+        help = "Create migrate table if it doesn't exist."
+    )]
     init: bool,
 
     #[arg(
