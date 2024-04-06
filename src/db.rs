@@ -267,10 +267,46 @@ async fn execute_queries(db: &Pool<MySql>, queries: Vec<String>) {
     });
 }
 
+async fn get_executable_query_count(n: u64) -> u64 {
+    let pool = db_pool().await;
+    let query = "SELECT COUNT(*) FROM migrations".to_string();
+    let count: u64 = get_count(&pool, query).await.expect("Not found data") as u64;
+
+    if n > count {
+        count
+    } else {
+        n
+    }
+}
+
+async fn get_count(db: &Pool<MySql>, query: String) -> Result<i64, Box<dyn Error>> {
+    let rows = execute_select_query(&db, query).await?;
+    if let Some(row) = rows.first() {
+        let count: i64 = row.get(0);
+        Ok(count)
+    } else {
+        Err("No count result found".into())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use tokio;
+
+    #[tokio::test]
+    async fn test_get_executable_query_count() {
+        let result = get_executable_query_count(100).await;
+        assert_eq!(result, 2);
+    }
+
+    #[tokio::test]
+    async fn test_get_count() {
+        let pool = db_pool().await;
+        let query = "SELECT COUNT(*) FROM migrations".to_string();
+        let count = get_count(&pool, query).await;
+        assert!(count.is_ok());
+    }
 
     #[tokio::test]
     async fn test_remove_migration() {
