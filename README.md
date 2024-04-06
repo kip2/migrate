@@ -14,6 +14,24 @@ This is a simple migration application that can be executed from the console.
 
 # Environment Setup
 
+## How to Build
+
+Execute the following in an environment where Rust is installed:
+
+```shell
+cargo build --release
+```
+
+Please deploy the built files to the directory.
+
+The built file is generated at the following path:
+
+```shell
+./target/release/migrate
+```
+
+## DB Access Configuration
+
 Setting up the database access information is necessary.
 
 Please follow the steps below:
