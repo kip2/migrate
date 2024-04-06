@@ -119,7 +119,7 @@ For example,
 - If you define table creation in `up`, then in `down`, define an SQL statement to delete the table created in `up`.
 - If you define an insert statement in `up`, then in `down`, define an SQL statement to delete the data inserted in `up`.
 
-In the following example, the table defined in `up` is being deleted.
+In the following example, we define an SQL statement that drops the table created in the `up` section.
 
 ```sql
 DROP TABLE users;
@@ -127,7 +127,7 @@ DROP TABLE users;
 
 # Executing Migrations
 
-Once the environment setup and preliminary steps are completed, execute the following command to perform the migration.
+After the environment setup and pre-preparation are complete, the migration will be executed with the following command.
 
 ```shell
 migrate
@@ -181,7 +181,7 @@ For a DB where 2 migrations have been performed, if a number greater than 2 is s
 
 # Help
 
-If you are unsure about what commands are available, please refer to the help.
+If you encounter any issues with the command, please refer to the help documentation.
 
 You can view the help with the following command:
 
