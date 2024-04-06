@@ -1,4 +1,4 @@
-[English](README.md)|[日本語](README.ja.md)
+[English](README.md)|[日本語](README-ja.md)
 
 <h1 align="center"> migrate </h1>
 
