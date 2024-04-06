@@ -2,7 +2,7 @@ use clap::Parser;
 use std::error::Error;
 
 use crate::{
-    db::{create_migration_table, migrate, roolback},
+    db::{create_migration_table, get_executable_query_count, migrate, roolback},
     file::create_migration_file,
 };
 
@@ -20,7 +20,7 @@ pub struct Args {
         help = "Rollback database",
         default_value = "0"
     )]
-    rollback: usize,
+    rollback: u64,
 }
 
 pub async fn run() -> Result<(), Box<dyn Error>> {
@@ -31,9 +31,13 @@ pub async fn run() -> Result<(), Box<dyn Error>> {
     } else if args.init {
         create_migration_table().await;
     } else if args.rollback > 0 {
-        roolback(args.rollback)
-            .await
-            .expect("Failed rollback migrations");
+        let count = get_executable_query_count(args.rollback).await;
+
+        if count == 0 {
+            return Err("No targets available for rollback".into());
+        }
+
+        roolback(count).await.expect("Failed rollback migrations");
     } else {
         migrate().await.expect("Failed migration");
     }

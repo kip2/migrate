@@ -98,7 +98,7 @@ pub async fn insert_migration(
     result.map_err(|e| e.into())
 }
 
-pub async fn roolback(n: usize) -> Result<(), Box<dyn Error>> {
+pub async fn roolback(n: u64) -> Result<(), Box<dyn Error>> {
     println!("Rolling back {} migration(s)...", n);
     let pool = db_pool().await;
     let last_migration = get_last_migration(&pool, Migrations::DOWN).await;
@@ -130,7 +130,7 @@ pub async fn roolback(n: usize) -> Result<(), Box<dyn Error>> {
         .iter()
         .enumerate()
         .skip(start_index)
-        .take(n)
+        .take(n.try_into().unwrap())
     {
         println!("Processing down migration for {}", &down_filename);
         let down_path = format!("{}/{}", &dir, &down_filename);
@@ -267,7 +267,7 @@ async fn execute_queries(db: &Pool<MySql>, queries: Vec<String>) {
     });
 }
 
-async fn get_executable_query_count(n: u64) -> u64 {
+pub async fn get_executable_query_count(n: u64) -> u64 {
     let pool = db_pool().await;
     let query = "SELECT COUNT(*) FROM migrations".to_string();
     let count: u64 = get_count(&pool, query).await.expect("Not found data") as u64;
