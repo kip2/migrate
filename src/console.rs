@@ -41,7 +41,20 @@ pub async fn run() -> Result<(), Box<dyn Error>> {
             return Err("No targets available for rollback".into());
         }
 
-        roolback(count).await.expect("Failed rollback migrations");
+        println!("Available execute rollback count: {}", count);
+
+        if count > args.rollback {
+            println!(
+                "Limiting rollback to {} due to user requests",
+                args.rollback
+            );
+            roolback(args.rollback)
+                .await
+                .expect("Failed rollback migrations");
+        } else {
+            println!("Executing {} rollbacks as requested", count);
+            roolback(count).await.expect("Failed rollback migrations");
+        }
     } else {
         migrate().await.expect("Failed migration");
     }
