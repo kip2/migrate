@@ -44,7 +44,7 @@ pub async fn migrate() -> Result<(), Box<dyn Error>> {
 
 pub async fn create_migration_table() {
     // Table definitions for managing migrations
-    let query = "CREATE TABLE migrations (
+    let query = "CREATE TABLE _migrations (
         id INT AUTO_INCREMENT PRIMARY KEY,
         up_file VARCHAR(400) NOT NULL,
         down_file VARCHAR(400) NOT NULL
@@ -55,7 +55,7 @@ pub async fn create_migration_table() {
 }
 
 async fn get_last_migration(db: &Pool<MySql>, column_type: Migrations) -> Option<String> {
-    let query = format!("SELECT up_file, down_file FROM migrations ORDER BY id DESC LIMIT 1");
+    let query = format!("SELECT up_file, down_file FROM _migrations ORDER BY id DESC LIMIT 1");
     let result = execute_select_query(db, query).await;
 
     match result {
@@ -87,7 +87,7 @@ pub async fn insert_migration(
     up_file_name: String,
     down_file_name: String,
 ) -> Result<MySqlQueryResult, Box<dyn Error>> {
-    let query = "INSERT INTO migrations (up_file, down_file) VALUES (?, ?)";
+    let query = "INSERT INTO _migrations (up_file, down_file) VALUES (?, ?)";
 
     let result = sqlx::query(query)
         .bind(up_file_name)
@@ -154,7 +154,7 @@ pub async fn remove_migration(
     db: &Pool<MySql>,
     down_filename: String,
 ) -> Result<MySqlQueryResult, Box<dyn Error>> {
-    let query = "DELETE FROM migrations WHERE down_file = ?";
+    let query = "DELETE FROM _migrations WHERE down_file = ?";
 
     let result = sqlx::query(query).bind(down_filename).execute(db).await;
 
@@ -269,7 +269,7 @@ async fn execute_queries(db: &Pool<MySql>, queries: Vec<String>) {
 
 pub async fn get_executable_query_count(n: u64) -> u64 {
     let pool = db_pool().await;
-    let query = "SELECT COUNT(*) FROM migrations".to_string();
+    let query = "SELECT COUNT(*) FROM _migrations".to_string();
     let count: u64 = get_count(&pool, query).await.expect("Not found data") as u64;
 
     if n > count {
@@ -303,7 +303,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_count() {
         let pool = db_pool().await;
-        let query = "SELECT COUNT(*) FROM migrations".to_string();
+        let query = "SELECT COUNT(*) FROM _migrations".to_string();
         let count = get_count(&pool, query).await;
         assert!(count.is_ok());
     }
@@ -347,7 +347,7 @@ mod tests {
     #[tokio::test]
     async fn test_select_query() {
         let pool = db_pool().await;
-        let query = "SELECT up_file FROM migrations ORDER BY id DESC LIMIT 1".to_string();
+        let query = "SELECT up_file FROM _migrations ORDER BY id DESC LIMIT 1".to_string();
         let result = execute_select_query(&pool, query).await;
         for row in result.unwrap() {
             let filename: String = row.get("up_file");

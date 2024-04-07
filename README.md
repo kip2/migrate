@@ -36,7 +36,7 @@ Setting up the database access information is necessary.
 
 Please follow the steps below:
 
-1. Place the .env file in the same directory as the built migration executable.
+1. Place the .env file in the same directory as the built migrate executable.
 2. Write your DB access settings in the .env file in the following format:
 
 ```env
@@ -58,7 +58,7 @@ migrate -i
 migrate --init
 ```
 
-After executing the command, a table named `migrations` for managing migrations will be created in the DB.
+After executing the command, a table named `_migrations` for managing migrations will be created in the DB.
 
 ## Creating Migration Files
 
@@ -135,7 +135,7 @@ migrate
 
 ## Migration Target Files
 
-Past migrations are managed in the `migrations` table.
+Past migrations are managed in the `_migrations` table.
 
 If you add a new migration file, only the newly added migration will be executed.
 
