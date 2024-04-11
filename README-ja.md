@@ -8,7 +8,7 @@
 
 # 前提
 
-- 本アプリケーションはMySQLの使用が前提となっています。
+- 本アプリケーションはMySQLとPostgreSQLの使用が前提となっています。
 - DBの設定は.envを使用します。
 - バイナリファイルの形では配布していませんので、各自の環境でビルドを行ってください。
 
@@ -40,8 +40,14 @@ DBアクセス情報の設定が必要になります。
 2. .envファイルに以下の形式で、DBアクセス設定を記入しください。
 
 ```env
+# mysqlの場合
 DATABASE_URL=mysql://username:password@hostname:port/db_name
+
+# postgresの場合
+DATABASE_URL=postgres://username:password@hostname:port/db_name
 ```
+
+`.env`ファイルの記載から接続するデータベースを自動で判別して接続します。
 
 # 事前準備
 
@@ -49,7 +55,7 @@ DATABASE_URL=mysql://username:password@hostname:port/db_name
 
 最初に、マイグレーションを管理するためのテーブルを作成します。
 
-実行前に、MySQLを使える環境、かつ、`.env`で接続の設定をしていることを確認してください。
+実行前に、データベースを使える環境で、`.env`に接続の設定をしていることを確認してください。
 
 ```shell
 migrate -i

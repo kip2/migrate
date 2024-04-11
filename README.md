@@ -8,7 +8,7 @@ This is a simple migration application that can be executed from the console.
 
 # Prerequisites
 
-- This application assumes the use of MySQL.
+- This application assumes the use of MySQL and PostgreSQL.
 - Database configuration is done through a .env file.
 - The application is not distributed as a binary file, so you will need to build it in your environment.
 
@@ -40,8 +40,14 @@ Please follow the steps below:
 2. Write your DB access settings in the .env file in the following format:
 
 ```env
+# mysql
 DATABASE_URL=mysql://username:password@hostname:port/db_name
+
+# postgres
+DATABASE_URL=postgres://username:password@hostname:port/db_name
 ```
+
+Automatically determines the database to connect from the description in the `.env` file and connects.
 
 # Preliminary Steps
 
@@ -49,7 +55,7 @@ DATABASE_URL=mysql://username:password@hostname:port/db_name
 
 First, create a table to manage the migrations.
 
-Before executing, make sure that you have access to MySQL and have set up the connection in the `.env` file.
+Before executing, make sure that you have access to Database and have set up the connection in the `.env` file.
 
 ```shell
 migrate -i
