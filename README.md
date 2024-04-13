@@ -58,10 +58,10 @@ First, create a table to manage the migrations.
 Before executing, make sure that you have access to Database and have set up the connection in the `.env` file.
 
 ```shell
-migrate -i
+./migrate -i
 
 # or
-migrate --init
+./migrate --init
 ```
 
 After executing the command, a table named `_migrations` for managing migrations will be created in the DB.
@@ -71,10 +71,10 @@ After executing the command, a table named `_migrations` for managing migrations
 Create files to define the migrations you want to execute.
 
 ```shell
-migrate -c
+./migrate -c
 
 # or
-migrate --create
+./migrate --create
 ```
 
 After executing the command, files like the following will be created:
@@ -136,7 +136,7 @@ DROP TABLE users;
 After the environment setup and pre-preparation are complete, the migration will be executed with the following command.
 
 ```shell
-migrate
+./migrate
 ```
 
 ## Migration Target Files
@@ -149,17 +149,17 @@ Here's an example procedure:
 
 ```shell
 # Execute the migration
-migrate
+./migrate
 
 # Create a new migration file
-migrate --create
+./migrate --create
 
 # Add SQL statements to the migration file
 # Details are omitted
 
 # Execute the new migration
 # Only the newly added migration will be executed
-migrate
+./migrate
 ```
 
 # Rollback
@@ -170,15 +170,15 @@ The command is as follows:
 
 ```shell
 # <n> specifies how many stages to rollback
-migrate -r <n>
+./migrate -r <n>
 # or
-migrate --rollback <n>
+./migrate --rollback <n>
 
 # For example
 # To rollback to 2 stages before
-migrate -r 2
+./migrate -r 2
 # or
-migrate --rollback 2
+./migrate --rollback 2
 ```
 
 Also, it will only execute the possible number of rollbacks.
@@ -192,9 +192,9 @@ If you encounter any issues with the command, please refer to the help documenta
 You can view the help with the following command:
 
 ```shell
-migrate -h
+./migrate -h
 # or
-migrate --help
+./migrate --help
 ```
 
 # LICENSE
