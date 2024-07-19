@@ -46,14 +46,28 @@ pub async fn migrate() -> Result<(), Box<dyn Error>> {
 
 pub async fn create_migration_table() {
     // Table definitions for managing migrations
-    let query = "CREATE TABLE _migrations (
+    dotenv().expect("Fialed to read .env file");
+    let database_url = env::var("DATABASE_URL").expect("DATBASE_URL must be set");
+
+    let query = if database_url.starts_with("postgres://") {
+        "CREATE TABLE IF NOT EXISTS _migrations (
+        id SERIAL PRIMARY KEY,
+        up_file VARCHAR(400) NOT NULL,
+        down_file VARCHAR(400) NOT NULL
+        );"
+    } else if database_url.starts_with("mysql://") {
+        "CREATE TABLE IF NOT EXISTS _migrations (
         id INT AUTO_INCREMENT PRIMARY KEY,
         up_file VARCHAR(400) NOT NULL,
         down_file VARCHAR(400) NOT NULL
-    );"
-    .to_string();
+        );"
+    } else {
+        panic!("Unsuported database type");
+    };
 
-    run(query).await.expect("Failed migration table");
+    run(query.to_string())
+        .await
+        .expect("Failed migration table");
 }
 
 async fn get_last_migration(db: &AnyPool, column_type: Migrations) -> Option<String> {
