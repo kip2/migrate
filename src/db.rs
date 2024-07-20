@@ -10,12 +10,15 @@ use std::{env, error::Error, fs};
 pub async fn migrate() -> Result<(), Box<dyn Error>> {
     println!("Start migration");
     let pool = db_pool().await.unwrap();
+
     let last_migration = get_last_migration(&pool, Migrations::UP).await;
     let dir = "./Migrations";
+
     let all_up_migrations =
         get_all_migration_files(dir, Migrations::UP).expect("Failed get all migration files");
     let all_down_migrations =
         get_all_migration_files(dir, Migrations::DOWN).expect("Failed get all migration file");
+
     let start_index = match last_migration {
         Some(filename) => {
             all_up_migrations
@@ -29,13 +32,20 @@ pub async fn migrate() -> Result<(), Box<dyn Error>> {
 
     for (index, up_filename) in all_up_migrations.iter().enumerate().skip(start_index) {
         println!("Processing up migration for {}", &up_filename);
+
         let up_path = format!("{}/{}", &dir, &up_filename);
         let down_filename = all_down_migrations
             .get(index)
             .expect("Matching down migration not found");
+
         let queries =
             read_sql_file(&up_path).expect(&format!("Failed to read {} file", &up_filename));
-        execute_queries(&pool, queries).await;
+
+        if let Err(e) = execute_queries(&pool, queries).await {
+            eprintln!("Failed to up migration in {}", up_filename);
+            return Err(e);
+        };
+
         insert_migration(&pool, up_filename.clone(), down_filename.clone())
             .await
             .expect("Failed to register file in the migration table");
@@ -281,7 +291,7 @@ async fn execute_query(db: &AnyPool, query: String) {
     });
 }
 
-async fn execute_queries(db: &AnyPool, queries: Vec<String>) {
+async fn execute_queries(db: &AnyPool, queries: Vec<String>) -> Result<(), Box<dyn Error>> {
     // Gererate transaction
     let mut tx = db.begin().await.expect("transaction error.");
 
@@ -295,7 +305,7 @@ async fn execute_queries(db: &AnyPool, queries: Vec<String>) {
                 println!("Database query failed: {}", e);
                 // rollback
                 tx.rollback().await.expect("Transaction rollback error.");
-                return;
+                return Err(Box::new(e));
             }
         }
     }
@@ -304,6 +314,8 @@ async fn execute_queries(db: &AnyPool, queries: Vec<String>) {
     let _ = tx.commit().await.unwrap_or_else(|e| {
         println!("{:?}", e);
     });
+
+    Ok(())
 }
 
 pub async fn get_executable_query_count(n: u64) -> u64 {
