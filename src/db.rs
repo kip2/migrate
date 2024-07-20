@@ -173,7 +173,10 @@ pub async fn roolback(n: u64) -> Result<(), Box<dyn Error>> {
             .expect("Matching down migration not found");
         let queries =
             read_sql_file(&down_path).expect(&format!("Failed to read {} file", &down_filename));
-        execute_queries(&pool, queries).await;
+        if let Err(e) = execute_queries(&pool, queries).await {
+            eprintln!("Failed to up migration in {}", down_filename);
+            return Err(e);
+        };
         remove_migration(&pool, down_filename.clone())
             .await
             .expect("Delete execute failed");
@@ -225,7 +228,10 @@ pub async fn read_and_run(path: String) -> Result<(), Box<dyn Error>> {
     // Read SQL queries
     let queries = read_sql_file(&path).unwrap();
 
-    execute_queries(&pool, queries).await;
+    if let Err(e) = execute_queries(&pool, queries).await {
+        eprintln!("Failed to query");
+        return Err(e);
+    };
     Ok(())
 }
 
