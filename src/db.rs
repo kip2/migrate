@@ -59,21 +59,22 @@ pub async fn create_migration_table() {
     dotenv().expect("Fialed to read .env file");
     let database_url = env::var("DATABASE_URL").expect("DATBASE_URL must be set");
 
-    let query = if database_url.starts_with("postgres://") {
-        "CREATE TABLE IF NOT EXISTS _migrations (
+    let query =
+        if database_url.starts_with("postgres://") || database_url.starts_with("postgresql://") {
+            "CREATE TABLE IF NOT EXISTS _migrations (
         id SERIAL PRIMARY KEY,
         up_file VARCHAR(400) NOT NULL,
         down_file VARCHAR(400) NOT NULL
         );"
-    } else if database_url.starts_with("mysql://") {
-        "CREATE TABLE IF NOT EXISTS _migrations (
+        } else if database_url.starts_with("mysql://") {
+            "CREATE TABLE IF NOT EXISTS _migrations (
         id INT AUTO_INCREMENT PRIMARY KEY,
         up_file VARCHAR(400) NOT NULL,
         down_file VARCHAR(400) NOT NULL
         );"
-    } else {
-        panic!("Unsuported database type");
-    };
+        } else {
+            panic!("Unsuported database type");
+        };
 
     run(query.to_string())
         .await
@@ -115,13 +116,14 @@ pub async fn insert_migration(
 ) -> Result<AnyQueryResult, Box<dyn Error>> {
     let database_url = env::var("DATABASE_URL").expect("DATBASE_URL must be set");
 
-    let query = if database_url.starts_with("postgres://") {
-        "INSERT INTO _migrations (up_file, down_file) VALUES ($1, $2)"
-    } else if database_url.starts_with("mysql://") {
-        "INSERT INTO _migrations (up_file, down_file) VALUES (?, ?)"
-    } else {
-        return Err("".into());
-    };
+    let query =
+        if database_url.starts_with("postgres://") || database_url.starts_with("postgresql://") {
+            "INSERT INTO _migrations (up_file, down_file) VALUES ($1, $2)"
+        } else if database_url.starts_with("mysql://") {
+            "INSERT INTO _migrations (up_file, down_file) VALUES (?, ?)"
+        } else {
+            return Err("".into());
+        };
 
     let result = sqlx::query(query)
         .bind(up_file_name)
@@ -193,13 +195,14 @@ pub async fn remove_migration(
 ) -> Result<AnyQueryResult, Box<dyn Error>> {
     let database_url = env::var("DATABASE_URL").expect("DATBASE_URL must be set");
 
-    let query = if database_url.starts_with("postgres://") {
-        "DELETE FROM _migrations WHERE down_file = $1"
-    } else if database_url.starts_with("mysql://") {
-        "DELETE FROM _migrations WHERE down_file = ?"
-    } else {
-        return Err("".into());
-    };
+    let query =
+        if database_url.starts_with("postgres://") || database_url.starts_with("postgresql://") {
+            "DELETE FROM _migrations WHERE down_file = $1"
+        } else if database_url.starts_with("mysql://") {
+            "DELETE FROM _migrations WHERE down_file = ?"
+        } else {
+            return Err("".into());
+        };
 
     let result = sqlx::query(query).bind(down_filename).execute(db).await;
 
@@ -240,7 +243,7 @@ fn read_sql_file(path: &str) -> Result<Vec<String>, Box<dyn Error>> {
 
     let database_url = env::var("DATABASE_URL").expect("DATBASE_URL must be set");
 
-    if database_url.starts_with("postgres://") {
+    if database_url.starts_with("postgres://") || database_url.starts_with("postgresql://") {
         let queries = parse_text(&contents);
         Ok(queries)
     } else if database_url.starts_with("mysql://") {
